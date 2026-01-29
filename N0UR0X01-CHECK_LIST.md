@@ -438,7 +438,9 @@ tax_rate=10&tax_exempt=yes
 - [ ] try to access internal functions in the admin panal by changing the `refere` header to `/admin` or `/adimn_login` and use this function like `http://lol.com/admin?deleteuser=nour`
 - [ ] Testing different HTTP methods (GET, POST, PUT, DELETE, PATCH)
 
-> **403 bypass **
+---
+
+> **403 bypass :**
 
 - [ ] search in `wayback` about this subdomain you can find any important path
 
