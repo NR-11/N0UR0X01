@@ -419,7 +419,7 @@ tax_rate=10&tax_exempt=yes
 - [ ] Testing different HTTP methods (GET, POST, PUT, DELETE, PATCH)
 - [ ] Duplicate -> `?id=1&id=2`
 - [ ] Add as an array -> `?id[]=1&id[]=2`
-- [ ] 
+- [ ] try to get premium account by changing parameter 
 
 **VERTICAL :**
 - [ ] Use account-A's Cookie/ Authorization-token to access Admin's Resources/Objects
@@ -437,6 +437,68 @@ tax_rate=10&tax_exempt=yes
 - [ ] check admin directories in js files
 - [ ] try to access internal functions in the admin panal by changing the `refere` header to `/admin` or `/adimn_login` and use this function like `http://lol.com/admin?deleteuser=nour`
 - [ ] Testing different HTTP methods (GET, POST, PUT, DELETE, PATCH)
+
+- mass assignment methods [[https://book.hacktricks.wiki/en/pentesting-web/mass-assignment-cwe-915.html]] 
+
+---
+
+>IMPORTANT FUNCTIONS 
+
+**RESET PASSWORD :**
+- [ ] 
+- [ ] 
+- [ ] 
+- [ ] 
+- [ ] 
+
+
+
+
+
+
+
+**CHANGE EMAIL :**
+- [ ] Change email for other users by modifying user_id parameter
+- [ ] Change email without providing current password or empty password or wrong password 
+- [ ]  Change to email that already exists in system
+- [ ] if you must use OTP then try OTP brute force (no rate limiting)
+- [ ] Change the request method and content type 
+- [ ] change the response 
+- [ ] Send multiple change email requests with changing the user id (race condition in email)
+- [ ] Add unexpected parameters (verified=true)
+- [ ] Parameter pollution: `new_email=attacker@evil.com&new_email=victim@company.com`
+- [ ] JSON array injection: `{"new_email": ["attacker@evil.com", "victim@company.com"]}`
+- [ ]  Change email with different session tokens
+- [ ] `attacker@evil.com\0victim@company.com` (null byte)
+- [ ] `attacker@evil.com,victim@company.com` (multiple emails)
+- injection in email field 
+	- [ ] SQL injection in email field: `test@evil.com'--`
+	- [ ] XSS payload in email field: `"><script>alert(1)</script>@evil.com`
+	- [ ] Path traversal in email field: `../../etc/passwd@evil.com`
+
+**CHANGE PASSWORD :**
+- [ ] Submit without `old_password` parameter** - system might not check
+- [ ] Empty old password - `old_password: ""`
+- [ ] Wrong old password - `old_password: "wrong123"`
+- [ ] Remove old_password field entirely from JSON/request
+- [ ] Modify `user_id` parameter - change password for other users
+- [ ] Try Changing request method and content type
+- [ ] Try Changing response too `200 OK` 
+- [ ] Access `/api/users/{id}/password` directly
+- [ ] Admin endpoints - `/admin/reset-user-password/{id}` from user account
+- [ ] Missing authorization check - can change password of users with lower privilege
+- [ ] Direct POST to change endpoint without loading form first
+- [ ] Skip password confirmation - don't send `confirm_password`
+- [ ] Race condition- change password twice simultaneously
+- [ ] Change password with stolen session cookie
+- [ ] Session doesn't expire after password change (old sessions still work)
+- [ ] Extremely long password causing DoS
+- [ ] if attacker has temporary access to session then Change password without old password when using "password reset" flow
+-  CSRF ATTACKS : 
+	- [ ] No CSRF token in change password form
+	- [ ] CSRF token not validated - accepts any token
+	- [ ] Token reuse - use same token multiple times
+
 
 ---
 
@@ -469,6 +531,7 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 
 # AUTHENTICATION BUGS
 
+check if you can create many account with the same credentials 
 
 
 # INJECTIONS BUGS 
