@@ -1,3 +1,4 @@
+
 # RECON
 ## 1- WHOIS
 ```shell
@@ -463,7 +464,19 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ] try changing request method 
 - [ ] change the content type
 - [ ] try changing response to `200 OK`
-- [ ] check if you can encode or decrypt the token 
+- [ ] Check Weak password reset token algorithm
+	```
+	- Timestamp
+	- UserID
+	- Email of User
+	- Firstname and Lastname
+	- Date of Birth
+	- Cryptography
+	- Number only
+	- Small token sequence ( characters between [A-Z,a-z,0-9])
+	- Token reuse
+	- Token expiration date
+	```
 - [ ] change you cookie to the victim cookie and try to change the password
 - [ ] Response body editing `{"success":false} → {"success":true}`
 - [ ] JWT token manipulation (alg:none, kid injection, weak secret)
@@ -474,6 +487,14 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ] try to delete the token and change password without it 
 - [ ] try to change the token value to `token=AAAAAAAA` or delete it like `token=`
 - [ ] try to send many requests without the same victim info in the same second (race condition)
+- [ ] Password Reset Token leak Via Referrer header
+	1.  Request password reset to your email address
+	2. Click on the password reset link
+	3. Don’t change password
+	4. Click any 3rd party websites(eg: Facebook, twitter)
+	5. Intercept the request in Burp Suite proxy
+	6. Check if the referrer header is leaking password reset token.
+
 
 *WITH OTP :*
 - [ ] check there is no rate limit for sending the otp 
@@ -482,10 +503,6 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ] OTP bypass via null/empty value
 - [ ] change your id to the victim id
 - [ ] try special otp like `000000`
-
-
-
-
 
 
 **CHANGE EMAIL :**
@@ -502,10 +519,15 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ]  Change email with different session tokens
 - [ ] `attacker@evil.com\0victim@company.com` (null byte)
 - [ ] `attacker@evil.com,victim@company.com` (multiple emails)
-- injection in email field 
+- [ ] injection in email field 
 	- [ ] SQL injection in email field: `test@evil.com'--`
 	- [ ] XSS payload in email field: `"><script>alert(1)</script>@evil.com`
 	- [ ] Path traversal in email field: `../../etc/passwd@evil.com`
+- [ ] CSRF ATTACKS : 
+	- [ ] No CSRF token in change password form
+	- [ ] CSRF token not validated - accepts any token
+	- [ ] Token reuse - use same token multiple times
+
 
 **CHANGE PASSWORD :**
 - [ ] Submit without `old_password` parameter** - system might not check
@@ -525,7 +547,7 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ] Session doesn't expire after password change (old sessions still work)
 - [ ] Extremely long password causing DoS
 - [ ] if attacker has temporary access to session then Change password without old password when using "password reset" flow
--  CSRF ATTACKS : 
+- [ ] CSRF ATTACKS : 
 	- [ ] No CSRF token in change password form
 	- [ ] CSRF token not validated - accepts any token
 	- [ ] Token reuse - use same token multiple times
@@ -535,7 +557,6 @@ email=victim@gmail.com&code=<TOKEN>
 
 > **403 bypass :**
 
-- [ ] search in `wayback` about this subdomain you can find any important path
 
 **TOOLS :**
 ```
@@ -555,15 +576,110 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 ```
 
 **MANUAL :**
+- [ ] search in `wayback` about this subdomain you can find any important path
 - [ ] try to change response to 200 OK
 - [ ] then use match and replace to change the Response and access this page from browser 
-
-
-
+ 
+---
 # AUTHENTICATION BUGS
 
-check if you can create many account with the same credentials 
+> BROKEN AUTHENTICATION 
+- [ ] Check if you can use **disposable emails**
+- [ ] Long **password** (>200) leads to **DoS** and Check if the Application Crashes for few seconds
+- [ ] Check rate limits on account creation (create many accounts)
+- [ ] Use username@**burp_collab**.net and analyze the **callback**
+- [ ]  look at the default credentials in  [CIRT.net](https://www.cirt.net/passwords). or brute force it using [SecLists Default Credentials](https://github.com/danielmiessler/SecLists/tree/master/Passwords/Default-Credentials)
+- [ ] 
+- [ ] old session dose not expird
+ ```text
+    1.create An account On Your Target Site
+	2.Login Into Two Browser With Same Account(Chrome, FireFox.You Can Use Incognito Mode As well) 
+    3.Change You Password In Chrome, On Seccessfull Password Change Referesh Your Logged in Account In FireFox/Incognito Mode.
+    4.If you'r still logged in Then This Is a Bug
+ ```
 
+
+*2FA & OTP :*
+
+| **Technique**                                 |
+| --------------------------------------------- |
+| Response Manipulation                         |
+| Status Code Manipulation                      |
+| 2FA Code Leakage in Response                  |
+| JavaScript File Analysis                      |
+| 2FA Code Reusability                          |
+| Lack of Brute-Force Protection                |
+| Missing 2FA Code Integrity Validation         |
+| CSRF on 2FA Disabling                         |
+| Backup Code Abuse                             |
+| Clickjacking on 2FA Disabling Page            |
+| Enabling 2FA Without Expiring Active Sessions |
+| Bypass 2FA with `null` or `000000`            |
+
+- [ ] check if there is no rate limit in login with OTP
+- [ ] try to skip 2fa pages like delete the 2fa form url `/nour/2fa --> /nour/profile` (force browsing)
+- [ ] try to skip 2fa pages by drop the request in burp proxy 
+- [ ] In response, if `{“success”:false}`, change it to `{“success”:true}`
+- [ ] If Status Code is 4xx, try to change it to 200 OK and see if it bypass restrictions
+- [ ] check if you can see the 2fa code in response  (otp is leaking in response)
+- [ ] try to re-use the same old 2FA code and if it is used then you can consider it as a bug or use the same 2fa code many times **(old otp is still valid)** 
+- [ ] check if you can use the same otp in another user 
+- [ ]  analysis the JS file to find the OTP 
+- [ ] Enable 2FA without verifying the email
+- [ ] Try IDOR 
+- [ ] 2FA Code Leakage in Response
+- [ ] Bypassing OTP in registration forms by repeating the form submission multiple times using repeater
+- [ ] check if you can bypassing the 2fa by using blank code like `otp= `
+- [ ] check if the account locks after several attempts of brute forceing the otp 
+- [ ] check the `000000`or `111111` or `123456` is valid (misconfiguration)
+- [ ] Bypass 2FA with `null`
+- [ ] Clickjacking on 2FA Disabling Page
+- [ ] try CSRF
+	```html
+	<form action="https://victim-site.com/disable-2fa" method="POST">
+    <input type="hidden" name="disable" value="true">
+    <input type="submit" value="Click to win a prize!">
+	</form>
+	```
+
+---
+
+> JWT
+
+- [ ] Edit the JWT with another User ID / Email
+- [ ] Test if sensitive data is in the JWT
+- [ ] Edit the `alg` parameter to `none` and delete the signature
+- [ ] Remove `alg` field entirely
+- [ ] Add custom claims like `admin: true`, `role: "admin"`
+- [ ] Test JWT secret brute-forcing `python3 jwt_tool.py <JWT> -C -d <Wordlist>`
+- [ ] use  [wordlist of well-known secrets](https://github.com/wallarm/jwt-secrets/blob/master/jwt.secrets.list) to crack the secret keys
+- [ ] Abusing JWT Public Keys Without knowing the Public Key https://github.com/silentsignal/rsa_sign2n
+- [ ]   Test if algorithm could be changed
+	- Change algorithm to None `python3 jwt_tool.py <JWT> -X a`
+	- Change algorithm from RS256 to HS256 `python3 jwt_tool.py <JWT> -S hs256 -k public.pem`
+- [ ]  Check for Injection in "kid" element `python3 jwt_tool.py <JWT> -I -hc kid -hv "../../dev/null" -S hs256 -p ""`
+- [ ] Key Injection
+    - SQL injection in `kid`: `kid' OR '1'='1`
+    - Path traversal: `kid`: `../../../etc/passwd`
+    - SSRF in `kid`: `kid`: `http://attacker.com/key`
+    - XSS in `kid`: `kid`: `"><script>alert(1)</script>`
+
+---
+
+>OAUTH
+-   
+    
+    Test `edirect_uri` for [[Open Redirect]] and [[Web-App Security/XSS|XSS]]
+    
+- Test the existence of response_type=token
+    
+- Missing state parameter? -> CSRF
+    
+- Predictable state parameter?
+    
+- Is state parameter being verified?
+
+---
 
 # INJECTIONS BUGS 
 
@@ -575,9 +691,10 @@ check if you can create many account with the same credentials
 
 # CMS BUGS 
 
+# AUTOMATION
 
 # OTHER
 
-
+# 
 
  
