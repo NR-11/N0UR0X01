@@ -496,7 +496,7 @@ email=victim@gmail.com&code=<TOKEN>
 	6. Check if the referrer header is leaking password reset token.
 
 
-*WITH OTP :*
+**WITH OTP :**
 - [ ] check there is no rate limit for sending the otp 
 - [ ] check if no rate limit in otp (brute force to ato)
 - [ ] No OTP expiry or long expiry time
@@ -748,10 +748,41 @@ me.com%09company.com
 
 # API BUGS
 
+- [ ] Look for APIs in directory names like `/api`, `/api/v1`, `/v1`, `/v2`, `/v3`, `/rest`, `/swagger`, `/swagger.json`, `/doc`, `/docs`, `/graphql`, `/graphiql`, `/altair`, `/playground`
+- [ ] Look for APIs subdomains like `api.target-name.com`, `uat.target-name.com`, `dev.target-name.com`, `developer.target-name.com`, `test.target-name.com`
+- [ ] Use Dorking [[N0UR0X01-WEB_CHECK_LIST#5- DORKS]]
+- [ ] Check for tokens bugs like JWT [[N0UR0X01-WEB_CHECK_LIST#AUTHENTICATION BUGS]]
+- [ ] Does the API use versioning in the URL (`/v1/`, `/v2/`)?
+- [ ] Can you find subdomains like `dev.api.com`, `staging.api.com`, or `test.api.com`?
+- [ ] Did you try changing the version in the request to see if an older, unpatched endpoint exists?
+- [ ] Does the older version lack the security headers or rate limits present in the newer version?
+- [ ] Can you perform sensitive actions (like password resets) on an older endpoint without being blocked?
+- [ ] If you receive a `403 Forbidden` or `429 Too Many Requests`, did you attempt **Case Switching** on the API path?
+- [ ] Did you try injecting **Null Bytes** (`%00`) before your injection payloads to blind the WAF filter?
+- [ ] Have you tested **Double URL Encoding** to trick the perimeter security boundaries?
+- [ ] Are you utilizing Burp's **Payload Processing** or Wfuzz's **Encoders** to automate evasion against a long list of endpoints?
+- [ ] CHECK FOR MASS ASSIGNMENT 
+	- [ ] Does the API accept JSON input for creating or updating resources?
+	- [ ] Can you add extra fields to the request that aren't in the original documentation?
+	- [ ] Did you try common administrative keys (e.g., `admin`, `role`, `verified`, `status`)?
+	- [ ] Can you change sensitive values like `price`, `quantity`, or `user_id` in a request?
+	- [ ] Does using **Param Miner** reveal any hidden parameters that the API accepts?
+- [ ] CHECK BOLA --> (IDOR's) [[N0UR0X01-WEB_CHECK_LIST#LOGIC BUGS]]
+	- [ ] Change or replace the IDs in URL or in body of the request
+	- [ ] change emails or usernames in the request body 
+- [ ] CHECK BFLA 
+	- [ ] Can a regular user access endpoints containing keywords like `admin`, `internal`, or `manager`?
+	- [ ] Does changing the HTTP method (e.g., from `GET` to `DELETE`) allow unauthorized actions?
+	- [ ] Does the API rely solely on the UI to hide administrative buttons rather than enforcing checks on the server?
+	- [ ] Can you perform sensitive actions (like changing prices or deleting accounts) using a standard user token?
+- [ ] CHECK AUTHENTICATION BUGS [[N0UR0X01-WEB_CHECK_LIST#AUTHENTICATION BUGS]]
+- [ ] CHECK BOPLA or Excessive Data Exposure 
+	- [ ] - [ ] Are you looking at the raw JSON response in Burp Suite instead of relying on the Web UI?
+	- [ ] Does a public endpoint (like a forum, comments section, or user directory) return private fields like emails, phone numbers, or internal IDs?
+	- [ ] Can the extra data discovered here be used as input parameters to exploit other endpoints?
+- [ ]  CHECK FOR SSRF (UPDATED SOON)
 
-
-
-
+---
 
 
 # INJECTIONS BUGS 
