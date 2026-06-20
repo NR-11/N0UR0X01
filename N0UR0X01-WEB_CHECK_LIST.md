@@ -747,6 +747,7 @@ me.com%09company.com
 
 
 # API BUGS
+>**REST APIS** 
 
 - [ ] Look for APIs in directory names like `/api`, `/api/v1`, `/v1`, `/v2`, `/v3`, `/rest`, `/swagger`, `/swagger.json`, `/doc`, `/docs`, `/graphql`, `/graphiql`, `/altair`, `/playground`
 - [ ] Look for APIs subdomains like `api.target-name.com`, `uat.target-name.com`, `dev.target-name.com`, `developer.target-name.com`, `test.target-name.com`
@@ -781,6 +782,50 @@ me.com%09company.com
 	- [ ] Does a public endpoint (like a forum, comments section, or user directory) return private fields like emails, phone numbers, or internal IDs?
 	- [ ] Can the extra data discovered here be used as input parameters to exploit other endpoints?
 - [ ]  CHECK FOR SSRF (UPDATED SOON)
+
+---
+
+>**GraphQL**
+
+- [ ] use  [graphw00f](https://github.com/dolevf/graphw00f) to identify graphql endpoint ana angen
+- [ ] send `?query=query{__typename}` to see if this endpoint use graphql 
+- [ ] use inql to get queries and mutations 
+- [ ] check if you can add fields like `password` or `token` to get the user password in response
+- [ ] check for information disclosure 
+- [ ] try to edit the json data to get idor or access controls
+- [ ] check the introspection is enable or no
+	```json
+    {
+        "query": "{__schema{queryType{name}}}"
+    }
+	```
+- [ ] if introspection in enable send the full introspection request to get schema map 
+- [ ] if introspection is disabled use [Clairvoyance](https://github.com/nikitastupin/clairvoyance) to get all or part of graphql schema
+- [ ] use [graphql-voyager](https://apis.guru/graphql-voyager/) to create a map for schema
+- [ ] try to bypass the rate limits using aliases to get no rate limit or race conditions 
+- [ ] use **`CrackQL`** for crackig
+- [ ] check for Batching Attacks if aliases field 
+	```json
+	[
+  {"query": "mutation { login(user:\"admin\", pass:\"123\") {token} }"},
+  {"query": "mutation { login(user:\"admin\", pass:\"456\") {token} }"}
+	```
+- [ ] try to get csrf [[GraphQL#GraphQL CSRF]]
+- [ ] inject a sql payload or xss other injections
+- [ ] check for blind sqli and ssrf 
+- [ ] check for path traversal and command injections
+- [ ] check for authentication bypass using sqli
+	```json
+	{ "query": "query{user(where:{email:{_eq:\"admin'--\"}, password:{_eq:\"' OR '1'='1\"}}){id,name,email}}" }
+	```
+- [ ] try to do a dos attack [[GraphQL#Denial of Service (DOS)]]
+- [ ] try to create account with high privilege using mutations 
+- [ ] check for important mutations in `Inql` like `runscript` to get `rce`
+- [ ] if you get 403 , error  , failed in response you must see in the ui if its true failed
+- [ ] search in js files for mutations or queries
+- [ ] OWASP GraphQL Cheat Sheet: [Link](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html)
+- [ ] full GraphQl check list [here](https://anmolksachan.github.io/graphql/)
+- [ ] check list with examples [here](https://kizerh.medium.com/exploiting-graphql-a-full-spectrum-security-assessment-covering-introspection-injection-and-560f49a44f36)
 
 ---
 
