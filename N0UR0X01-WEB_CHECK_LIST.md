@@ -92,21 +92,131 @@ site:example.com filetype:sql
 ---
 
 ## 6- SUBDOAMIN ENUMERATI1ON
+### Passive
+>**SubFinder**
 ```shell
-subfinder -d example.com -o sub_subfinder.txt
+subfinder -d example.com -all -recursive -o sub_subfinder.txt 
 ```
 
-```shell
-assetfinder --subs-only example.com > sub_assetfinder.txt
-```
-
+>**Amass**
 ```shell
 amass enum -passive -d example.com -o sub_amass_passive.txt
 ```
 
+>**Bbot**
+```shell
+bbot -t example.com -p subdomain-enum -rf passive -om subdomains -y -o /bbout
+```
+
+>**Subenum**
+```shell
+./subenum.sh -d example.com -u wayback,crt,abuseipdb,Findomain,Subfinder,Amass,Assetfinder -o sub_subenum.txt
+```
+
+>**GitHub-SubDomains**
+>get your token : https://github.com/settings/personal-access-tokens
+```shell
+github-subdomains -d example.com -t GitHub_Token -o sub_github-subdomains.txt
+```
+
+>**To get all passive subdomains in the same file**
+```shell
+cat sub_*.txt | sort -u > passive_subdomains.txt
+```
+
+
+### ACTIVE
+get a best_dns_wordlist
+```shell
+wget https://wordlists-cdn.assetnote.io/data/manual/best-dns-wordlist.txt
+```
+get a ip resolvers file 
+```shell
+wget https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt
+```
+
+>**Amass**
 ```shell
 amass enum -brute -active -d domain.com -o sub_amass_active.txt
 ```
+
+>**PureDns**
+```shell
+puredns bruteforce {wordlist} example.com -r resolvers.txt -w sub_puredns.txt
+```
+
+then add all subdomains (active and passive) in the same file using this command 
+```shell
+cat passive_subs.txt sub_brute.txt | sort -u > all_discovered_subs.txt
+```
+
+>**DnsGen**
+> "This command leverages `dnsgen` to generate smart subdomain mutations from discovered targets, then pipes them into `puredns` to massively resolve and filter out wildcards, saving only the verified live subdomains to a file."
+```shell
+dnsgen all_discovered_subs.txt | puredns resolve -r resolvers.txt -w mutated_subs.txt
+```
+
+
+### Certification (SSL)
+
+```shell
+curl -s "https://crt.sh/?q=%25.example.com&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | tr '\n' ',' | tr ',' '\n' | grep -oE "[A-Za-z0-9._-]+ \.example\.com" | sort -u > sub_crt.txt
+```
+### Fuzzing
+```shell
+ffuf -u https://FUZZ.example.com -w {wordlist}
+```
+
+```shell
+ffuf -u https://FUZZ.subdomain.example.com -w {wordlist}
+```
+
+```shell
+ffuf -u https://FUZZ-example.com -w {wordlist}
+```
+
+```shell
+ffuf -u https://FUZZwww.example.com -w {wordlist}
+```
+
+### Virtual Host
+```shell
+ping example.com
+```
+then tack the target ip 
+and put it in `etc/hosts`
+```shell
+echo <ip>  test.com >> etc/hosts
+```
+
+```shell
+ffuf -u https://example.com -w {wordlist} -H "Host:FUZZ.example.com"
+```
+
+```shell
+ffuf -u https://<ip> -w {wordlist} -H "Host:FUZZ.example.com"
+```
+ 
+### Infrastructure Discovery
+visit this site : https://bgp.he.net and put your target name 
+if you got a resault :
+
+to get the ips and cdir range:
+```shell
+asnmap -a {ASN}
+```
+
+to get info about this asn:
+```shell
+whois -h whois.radb.net {ASN}
+```
+
+```shell
+echo {CDIR} | dnsx -silent -resp-only -ptr 
+```
+
+### Marge & Remove Duplicates
+
 Then add all subdomains to the same file 
 ```shell
 cat sub_*.txt | sort -u > all_subdomains.txt
@@ -118,7 +228,7 @@ httpx -l all_subdomains.txt -o live_subdomains.txt
 ```
 to get all live subdomains with some detailed
 ```
-httpx -l live_subdomains.txt -status-code -title -tech-detect -timeout 30 -retries 2 -threads 10 -no-fallback -rate-limit 10 -o info_live_subdomain_full.txt -silent -include-chain
+httpx -l live_subdomains.txt -status-code -title -tech-detect -timeout 30 -retries 2 -threads 10 -no-fallback -content-length -web-server -rate-limit 10 -o info_live_subdomain_full.txt -silent -include-chain
 ```
 grep for subdomains include this words 
 ```
@@ -167,44 +277,80 @@ path to wordlists for subdomain enumeration
 /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt
 ```
 
+>**NOTE :**
+404 ----> wayback +fuzz
+403 ----> Try bypass
+
 
 [[2- Recon#SUBDOMAIN ENUMERATION#SUBFINDER]]
 
 ---
 ## 7- CONTENT DISCOVERY 
 To get all url's from `Wayback machine , common crawl , virustotal`
+
+>**WayMore** (best one)
 ```shell
-cat live_subdomains.txt | gau > gau_raw.txt
+waymore -i live_subdomains.txt -mode U -l 1000 -from 2021 -oU waymore_raw.txt
 ```
 
-to get all WayBackUrls links                *gau is petter*
+>**Katena**
 ```shell
-cat live_subdomains.txt | waybackurls > wayback_raw.txt
+katana -u live_subdomains.txt -jc -kf all -d 5 -fx -aff -fs rdn -f url -silent > katana_raw.txt
 ```
 
-then filtering the output
+filtering the output using [uro](https://github.com/s0md3v/uro) 
 ```shell
-cat gau_raw.txt wayback_raw.txt | sort -u > all_urls.txt
+cat katana_raw.txt waymore_raw.txt | uro > urls.txt
 ```
 
-to get all urls with parameters  in the same file
+to get all url without parameters :
 ```shell
-cat all_urls.txt | grep "=" | sort -u > params.txt
+grep -v "\?" urls.txt > urls_without_parameters.txt
 ```
 
-the params.txt file is very important because it can be contain data like 
-```
-https://shop.example.com/search?q=mobile
-https://api.example.com/getUser?id=123
-https://dev.example.com/login?redirect=/dashboard
-```
-
-## 8- CRAWLING
+>**X8**
 ```shell
-katana -list all_subdomains.txt -o katana_raw.txt
+x8 -u urls_without_parameters.txt -o x8_raw.txt
 ```
 
-[[2- Recon#Web Crawling]]
+
+>**Filtering the output**
+
+```shell
+cat urls.txt x8_raw.txt |anew | tee all_urls.txt
+```
+
+```shell
+cat all_urls.txt | grep -i "\.js" > js.txt
+cat all_urls.txt | grep -i "\.asp" > asp.txt
+cat all_urls.txt | grep -i "\.php" > php.txt
+cat all_urls.txt | grep -i "\.jsp" > jsp.txt
+cat all_urls.txt | grep -i "\.jspx" > jspx.txt
+cat all_urls.txt | grep -i "\.aspx" > aspx.txt
+cat all_urls.txt | grep -i "\.=" > injection.txt
+```
+
+to get the interesting urls 
+```shell
+cat all_urls.txt | urinteresting
+```
+
+to get all live urls
+```shell
+cat all_urls.txt | httpx -status-code -content-length -silent > live_urls.txt
+```
+
+>**Extract Parameters**
+
+to put `FUZZ` in a parameters value
+```shell
+cat all_urls.txt |grep "=" |qsreplace "FUZZ" |anew | tee fuzz_parameters_Value.txt
+```
+
+
+```shell
+cat all_urls.txt |grep "=" |anew parameters.txt
+```
 
 ---
 ## 9- DIRECTORY FUZZING 
@@ -349,6 +495,7 @@ nuclei -u <url,url_file.txt> -t template
 - [ ] Try to get two coupons and switch between them. Once you put the first one, the second time you put the second one, then you go back to the first one again.
 - [ ] put many things in your cart then send the check out request and see if you get all productes
 - [ ] when you try to place order maybe its sending a specific request so try to sent this request after you add a lot of products in your cart 
+- [ ] Try adding the entire available stock of a specific product to your  cart, then—using a different account—attempt to add some of those same items to see if they appear unavailable; by doing so, you effectively reserve all those goods in your account, preventing anyone else from purchasing them.
 - [ ] Try changing the shipping price
 - [ ] Try changing your currency to a weaker currency.
 - [ ] check if there is a race conditions (get many items with the 1 price)
@@ -440,6 +587,35 @@ tax_rate=10&tax_exempt=yes
 - [ ] Testing different HTTP methods (GET, POST, PUT, DELETE, PATCH)
 
 - mass assignment methods [[https://book.hacktricks.wiki/en/pentesting-web/mass-assignment-cwe-915.html]] 
+---
+
+> **PRIVILEGE ESCLATION**
+
+- [ ] Numeric ID Substitution: Swap your user ID (e.g., `1002`) with lower/higher IDs (e.g., `1001`, `1` for Admin) in all API endpoints (`/api/users/1002` $\rightarrow$ `/api/users/1`).
+- [ ] UUID/GUID Guessing & Leakage: If IDs are random hashes, hunt for endpoints, public profiles, or chat logs that leak other users' or admins' UUIDs.
+- [ ] Try adding hidden administrative parameters to registration or update requests like 
+	```json
+	{"is_admin": true}
+    {"role": "admin"}` / `{"role_id": 1}
+    {"privileges": ["root"]}
+	```
+- [ ] If the application updates profile data via JSON, inject arrays:`{"roles": ["user", "admin"]}`
+- [ ] Test the same endpoint with different HTTP methods. A regular user might only be allowed to `GET /api/v1/users`, but can they `PUT`, `POST`, or `DELETE`
+- [ ] Check if an older, unpatched version of the API allows high-privilege actions without proper validation (e.g., `/api/v3/admin/delete` -->`/api/v1/admin/delete`).
+- [ ] Trick the application into believing the request is coming from `localhost` or an internal IP using headers
+	```json
+	X-Forwarded-For: 127.0.0.1
+	X-Originating-IP: 127.0.0.1
+	X-Remote-IP: 127.0.0.1
+	X-Client-IP: 127.0.0.1
+	```
+- [ ] Identify high-privilege functions from JS files or documentation, and try accessing them directly using lower roles
+- [ ] When a `User` updates their settings, add: `&role=Owner`, `&is_superuser=true`, `&access_level=99`
+- [ ] change the payload values inside the jwt like `"role":"user" --> "role":"admin"`
+- [ ] During the initial OAuth authorization request, manually append high-privilege scopes: `scope=read_profile` --> `scope=read_profile+write_settings+admin`
+- [ ] Register an account using the victim's email address via standard registration, then choose "Sign in with Google" using the same email. See if it merges both without verifying the original password.
+- [ ] use Authorize if there is a two roles like `admin , user`
+- [ ] use auth analyzer if there is many roles like `admin, owner , user, super_user , editor`
 
 ---
 
@@ -503,6 +679,7 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ] OTP bypass via null/empty value
 - [ ] change your id to the victim id
 - [ ] try special otp like `000000`
+- [ ] check if you can change the response of the otp request to `200 OK` (Response Manipulation )
 
 
 **CHANGE EMAIL :**
@@ -668,21 +845,21 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 
 >OAUTH
 
- - [ ]  if `response_type=token` check if you can change any user info parameter in authenticate request to get ATO
- - [ ] try to change the `response_type=token` to `response_type=code` and see what happend
-- [ ] Exploit OAuth CSRF (missing `state` parameter) to link attacker’s social account to victim by forcing `/oauth-linking?code=ATTACKER_CODE` via `iframe` leading to ATO via social login.
-- [ ] try to delete `state` parameter
-- [ ] try to change value of `state` parameter 
-- [ ] Exploit weak `redirect_uri` validation to leak authorization code via attacker-controlled domain, then reuse the stolen code to authenticate as the victim (open redirect to ATO).
-- [ ] If external `redirect_uri` is blocked → pivot to internal paths and exploit open redirects , XSS or other bugs to leak the code/token.
-- [ ] OAuth misconfiguration where the server redirects to `redirect_uri` even on validation errors (e.g. invalid scope), leading to an [open redirect that can be abused for phishing attacks](https://infosecwriteups.com/500-bug-bounty-open-redirection-via-oauth-on-shopify-4159387482f9)
-- [ ] check if you can change value of [email parameter after OAuth authentication](https://medium.com/@hacker_might/this-oauth-bug-earned-me-account-takeover-via-identity-injection-27774f65288c)
-- [ ] check of [pre-ATO](https://medium.com/@KhaledAhmed107/how-i-found-5-oauth-misconfigurations-leading-to-pre-account-takeover-in-public-bug-bounty-programs-021d4c8c6954)
+ - [x]  if `response_type=token` check if you can change any user info parameter in authenticate request to get ATO
+ - [x] try to change the `response_type=token` to `response_type=code` and see what happend
+- [x] Exploit OAuth CSRF (missing `state` parameter) to link attacker’s social account to victim by forcing `/oauth-linking?code=ATTACKER_CODE` via `iframe` leading to ATO via social login.
+- [x] try to delete `state` parameter
+- [x] try to change value of `state` parameter 
+- [x] Exploit weak `redirect_uri` validation to leak authorization code via attacker-controlled domain, then reuse the stolen code to authenticate as the victim (open redirect to ATO).
+- [x] If external `redirect_uri` is blocked → pivot to internal paths and exploit open redirects , XSS or other bugs to leak the code/token.
+- [x] OAuth misconfiguration where the server redirects to `redirect_uri` even on validation errors (e.g. invalid scope), leading to an [open redirect that can be abused for phishing attacks](https://infosecwriteups.com/500-bug-bounty-open-redirection-via-oauth-on-shopify-4159387482f9)
+- [x] check if you can change value of [email parameter after OAuth authentication](https://medium.com/@hacker_might/this-oauth-bug-earned-me-account-takeover-via-identity-injection-27774f65288c)
+- [x] check of [pre-ATO](https://medium.com/@KhaledAhmed107/how-i-found-5-oauth-misconfigurations-leading-to-pre-account-takeover-in-public-bug-bounty-programs-021d4c8c6954)
 	1.  Register using victim email (no verification)
 	2. logout
 	3. login vial OAuth with the same email 
-	4. if logged in without verification -> pre account tackover 
-- [ ] try to create account manual then in another browser login with OAuth with the same email and change the password if you stell logged in at the first browser in the same account so its a bug and if you in a different account so you can use the same email in many accounts 
+	4. if logged in without verification -> pre ATO 
+- [x] try to create account manual then in another browser login with OAuth with the same email and change the password if you still logged in at the first browser in the same account so its a bug and if you in a different account so you can use the same email in many accounts 
 	```
 	1. Create an account manually using a test/victim email (no email verification).
 	2. Stay logged in (Browser 1).
@@ -693,12 +870,12 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 	- If you are logged into a different account → Email duplication / account confusion (BUG)
 	- If both logins lead to the same account → Check for account takeover scenarios.
 	```
-- [ ] Add json or xml extension to OAuth Endpoint `POST /oauth/Connect.json HTTP/1.1`
-- [ ] Try XSS in OAuth connect/callback 
+- [x] Add json or xml extension to OAuth Endpoint `POST /oauth/Connect.json HTTP/1.1`
+- [x] Try XSS in OAuth connect/callback 
 	```json
 	GET /oauth/Connect?)%7D(alert)(location);%7B%3C!--&state=\&redirect_uri=URL&scope=read&type=code&client_id=ID& HTTP/1.1 
 	```
-- [ ] Try SSTI in scope parameter
+- [x] Try SSTI in scope parameter
 	```json
 	GET /oauth/Connect? type=code&client_id=ID&state=Random&redirect_uri=URL &scope=${T(Java.lang.Runtime).getRuntime(). exec("calc.exe")} HTTP/1.1 
 	Host: www.company.com 
@@ -707,16 +884,16 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 	Origin: https://www.company.com 
 	Accept-Encoding: gzip, deflate
 	```
-- [ ] Try XSS in Redirect URI Parameter 
+- [x] Try XSS in Redirect URI Parameter 
 	```json
 	client_id=ID&client_secret=SECRET&type=Authorization& code=Auth_code&redirect_uri=javascript:fetch('XSS')
 	```
-- [ ]  Try To Insert Redirect URL Parameter To Redirect URL As Value To Steal The Authorization Code OR The Access Token
+- [x]  Try To Insert Redirect URL Parameter To Redirect URL As Value To Steal The Authorization Code OR The Access Token
 	```json
 	GET /oauth/Connect?type=code&client_id=ID&state=Random &redirect_uri=https://www.company.com.com/../../redirect_ uri=https://me.com&scope=read HTTP/1.1
 	```
-- [ ] try to change the request method
-- [ ] check if you can get XSS from `code` parameter 
+- [x] try to change the request method
+- [x] check if you can get XSS from `code` parameter 
 - List Of Patterns To Bypass The Whitelist In Redirect URL Parameter
 ```
 https://me.com\@www.company.com
@@ -806,7 +983,6 @@ me.com%09company.com
 - [ ] use **`CrackQL`** for crackig
 - [ ] check for Batching Attacks if aliases field 
 	```json
-	[
   {"query": "mutation { login(user:\"admin\", pass:\"123\") {token} }"},
   {"query": "mutation { login(user:\"admin\", pass:\"456\") {token} }"}
 	```
